@@ -7,7 +7,7 @@ const Header = () => {
     const {orgId}=useAuth();
     console.log(orgId);
   return (
-    <div className='flex justify-between items-center px-5 py-3 shadow-sm'>
+    <div className='flex items-center justify-between px-5 py-3 shadow-sm'>
       <Logo />
 
       <OrganizationSwitcher 
