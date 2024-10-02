@@ -16,6 +16,7 @@ const CreateWorkspace = () => {
   );
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [workSpaceName, setWorkspaceName] = useState("");
+  const [Emoji, setEmoji] = useState();
   return (
     <div className="p-10 py-28 md:px-36 lg:px-64 xl:px-96">
       <div className="shadow-2xl rounded-xl">
@@ -41,9 +42,12 @@ const CreateWorkspace = () => {
             This is a shared workspace where You can rename it later.
           </h2>
           <div className="flex items-center gap-2 mt-8">
-            <EmojiPickerComponents showPicker={showEmojiPicker}>
+            <EmojiPickerComponents showPicker={showEmojiPicker} setEmoji={(emoji)=>setEmoji(emoji)}>
               <Button variant="outline" onClick={()=>{setShowEmojiPicker(!showEmojiPicker)}}>
-                <SmilePlus />
+                {Emoji?
+                <h3 className="text-2xl">
+                    {Emoji}
+                </h3>:<SmilePlus />}
               </Button>
             </EmojiPickerComponents>
             <Input
