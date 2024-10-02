@@ -1,11 +1,20 @@
-import React from 'react'
+"use client"
 
-const Workspace = () => {
+import React from 'react'
+import SideNav from '../../_components/SideNav'
+
+const WorkspaceDocument = (params) => {
   return (
     <div>
-      WorkSpace
+      <div>
+      <SideNav params={params}/>
+      </div>
+      <div className='md:ml-72'>
+        Document
+      </div>
+      
     </div>
   )
 }
 
-export default Workspace
+export default WorkspaceDocument
