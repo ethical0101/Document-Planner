@@ -2,17 +2,20 @@
 
 import React from 'react'
 import SideNav from '../../_components/SideNav'
+import DocumentEditorSection from '../../_components/DocumentEditorSection'
+
 
 const WorkspaceDocument = (params) => {
   return (
-    <div>
-      <div>
+    <div className='flex w-full'>
+      
+      <div className='z-10'>
       <SideNav params={params}/>
       </div>
-      <div className='md:ml-72'>
-        Document
-      </div>
       
+      <div className='w-full'>
+        <DocumentEditorSection params={params}/>
+      </div>
     </div>
   )
 }
