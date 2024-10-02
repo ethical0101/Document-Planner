@@ -46,6 +46,7 @@ const CreateWorkspace = () => {
       coverImage:null,
       Emoji:null,
       id:docId,
+      documentName:"Untitiled Document",
       documentOuput:[]
 
     });
