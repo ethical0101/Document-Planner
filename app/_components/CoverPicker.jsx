@@ -12,7 +12,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import Image from "next/image";
-import { set } from "mongoose";
 
 const CoverPicker = ({ children, setNewCover }) => {
   const [selectedCover, setSelectedCover] = useState();

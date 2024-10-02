@@ -4,9 +4,7 @@ import CoverPicker from "@/app/_components/CoverPicker";
 import EmojiPickerComponents from "@/app/_components/EmojiPickerComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import EmojiPicker from "emoji-picker-react";
 import { SmilePlus } from "lucide-react";
-import { set } from "mongoose";
 import Image from "next/image";
 import React, { useState } from "react";
 

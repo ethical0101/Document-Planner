@@ -1,5 +1,4 @@
 import EmojiPicker from "emoji-picker-react";
-import { set } from "mongoose";
 import React from "react";
 
 const EmojiPickerComponents = ({ children, showPicker,setEmoji }) => {
