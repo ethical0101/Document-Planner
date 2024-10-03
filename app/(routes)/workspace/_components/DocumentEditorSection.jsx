@@ -9,7 +9,7 @@ function DocumentEditorSection(params) {
     <div >
       <DocumentHeader />
       <DocumentInfo documentid={params.params.params.documentid}/>
-      <RichDocumentEditor />
+      <RichDocumentEditor params={params.params.params}/>
     </div>
   )
 }

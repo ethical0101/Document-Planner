@@ -51,12 +51,12 @@ const SideNav = (params) => {
         Emoji: null,
         id: docId,
         documentName: "Untitled Document",
-        documentOuput: []
+        documentOutput: []
       });
       
       await setDoc(doc(db, "documentOutput",docId.toString()),{
         docId:docId,
-        ouput:[]
+        output:[]
       });
         
       // Ensure to use workspaceid here too

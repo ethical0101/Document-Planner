@@ -47,16 +47,16 @@ const CreateWorkspace = () => {
       Emoji:null,
       id:docId,
       documentName:"Untitiled Document",
-      documentOuput:[]
+      documentOutput:[]
 
     });
     
     await setDoc(doc(db, "documentOutput",docId.toString()),{
       docId:docId,
-      ouput:[]
+      output:[]
     });
       
-    router.replace('/workspace/'+workspaceId+"/"+docId)
+    router.replace('/workspace/'+workspaceId+'/'+docId)
     setLoading(false);
   }
   
