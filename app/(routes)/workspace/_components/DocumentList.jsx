@@ -11,9 +11,9 @@ function DocumentList({ documentList, params }) {
     
     const DeleteDocument = async (docId)=>{
         await deleteDoc(doc(db, "workspacedocuments", docId));
-        toast('Deleted Document !');
     }
-    console.log(params);
+    console.log("DocumentLIst params",params);
+    console.log(documentList);
     return (
         <div>
             {documentList.map((doc, index) => {

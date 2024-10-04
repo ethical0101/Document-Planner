@@ -12,6 +12,8 @@ import { db } from "@/config/firebaseConfig";
 import { useUser } from "@clerk/nextjs";
 
 function RichDocumentEditor({ params }) {
+
+  console.log("This is rich doc params->",params)
   const editorRef = useRef(null); // Reference for the editor instance
   const { user } = useUser();
   let isFetched = false;
@@ -21,13 +23,6 @@ function RichDocumentEditor({ params }) {
     if (user && !editorRef.current) {
       initEditor(); // Initialize EditorJS
     }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy(); // Clean up the editor on unmount
-        editorRef.current = null;
-      }
-    };
   }, [user]);
 
   const saveDocument = async () => {

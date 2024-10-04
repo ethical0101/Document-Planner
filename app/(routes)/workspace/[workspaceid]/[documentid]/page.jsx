@@ -5,7 +5,8 @@ import SideNav from '../../_components/SideNav'
 import DocumentEditorSection from '../../_components/DocumentEditorSection'
 
 
-const WorkspaceDocument = (params) => {
+const WorkspaceDocument = ({params}) => {
+  console.log("WorkspaceDocument params",params)
   return (
     <div className='flex w-full'>
       

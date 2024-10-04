@@ -3,13 +3,13 @@ import DocumentHeader from './DocumentHeader'
 import DocumentInfo from './Documentinfo'
 import RichDocumentEditor from './RichDocumentEditor'
 
-function DocumentEditorSection(params) {
+function DocumentEditorSection({params}) {
     console.log("sgfrsdsfg",params)
   return (
     <div >
       <DocumentHeader />
-      <DocumentInfo documentid={params.params.params.documentid}/>
-      <RichDocumentEditor params={params.params.params}/>
+      <DocumentInfo documentid={params.documentid}/>
+      <RichDocumentEditor params={params}/>
     </div>
   )
 }

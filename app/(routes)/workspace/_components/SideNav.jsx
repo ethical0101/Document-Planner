@@ -11,8 +11,7 @@ import uuid4 from "uuid4";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
-const SideNav = (params) => {
-    params = params.params.params;
+const SideNav = ({params}) => {
     console.log(params);
 
     const [documentList, setDocumentList] = useState([]);
@@ -25,8 +24,9 @@ const SideNav = (params) => {
     },[params]);
 
     const GetDocumentList=()=>{
+      // const workId = (params)=>(params?.workspaceid)?params?.workspaceid:params.params?.workspaceid
         const q=query(collection(db, 'workspacedocuments'),
-            where('workspaceId','==',params?.workspaceid));
+            where('workspaceId','==',params.workspaceid));
             
         const unsubscribe = onSnapshot(q, (querySnapshot)=>{
           setDocumentList([]);
