@@ -14,7 +14,7 @@ export function Room({ params , children}) {
   console.log("Room jsx children->",children);
   return (
     <LiveblocksProvider 
-    authEndpoint="/api/liveblocks-auth"
+    authEndpoint={"/api/liveblocks-auth?roomId=" + params?.documentid}
     resolveUsers={async ( { userIds }) => {
         console.log("Room jsx UserId's==>",userIds);
         const q=query(collection(db,'DocPlannerUsers'),where('email','in',userIds))

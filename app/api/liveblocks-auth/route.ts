@@ -15,7 +15,10 @@ export async function POST(request: Request) {
   );
 
   const {room}=await request.json();
-  session.allow(room,session?.FULL_ACCESS);
+  const  {searchParams} = new URL(request?.url)
+  const roomId = searchParams.get('roomId');
+  console.log(room);
+  session.allow(roomId,session?.FULL_ACCESS);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();

@@ -33,6 +33,7 @@ function RichDocumentEditor({ params }) {
       output: outputData,
       EditedBy: user?.primaryEmailAddress?.emailAddress,
     });
+    
   };
 
   const getDocumentOutput = () => {
@@ -40,9 +41,10 @@ function RichDocumentEditor({ params }) {
       doc(db, 'documentOutput', params?.documentid),
       (doc) => {
         const data = doc.data()?.output;
+        console.log("Output Data in richdoc", data)
         if (!isFetched || data?.EditedBy !== user?.primaryEmailAddress?.emailAddress) {
           if (data) {
-            editorRef.current.render(data); // Pass the object directly, not wrapped in an array
+            editorRef.current.render(doc.data()?.output); // Pass the object directly, not wrapped in an array
           }
           isFetched = true;
         }
