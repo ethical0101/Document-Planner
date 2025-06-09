@@ -2,9 +2,9 @@ import { Button } from '@/components/ui/button'
 import { OrganizationSwitcher, UserButton } from '@clerk/nextjs'
 import React from 'react'
 
-function DcoumentHeader() {
+function DocumentHeader() {
   return (
-    <div className='flex justify-between items-center p-3 px-7 shadow-md'>
+    <div className='flex items-center justify-between p-3 shadow-md px-7'>
         <div></div>
         <OrganizationSwitcher/>
         <div className='flex gap-2'>
@@ -15,4 +15,4 @@ function DcoumentHeader() {
   )
 }
 
-export default DcoumentHeader
+export default DocumentHeader

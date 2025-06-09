@@ -9,8 +9,8 @@ import {
     InboxNotification,
     InboxNotificationList,
   } from "@liveblocks/react-ui";
-  
-function NotifiationBox({children}) {
+
+function NotificationBox({children}) {
     const { inboxNotifications } = useInboxNotifications();
     const updateRoomNotificationSettings=useUpdateRoomNotificationSettings();
     const { count, error, isLoading } = useUnreadInboxNotificationsCount();
@@ -18,7 +18,7 @@ function NotifiationBox({children}) {
         updateRoomNotificationSettings({threads:'all'})
         console.log(count)
     },[count])
-  
+
     return (
     <Popover>
     <PopoverTrigger>
@@ -36,8 +36,8 @@ function NotifiationBox({children}) {
     </InboxNotificationList>
     </PopoverContent>
   </Popover>
-  
+
   )
 }
 
-export default NotifiationBox
+export default NotificationBox

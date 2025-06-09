@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import DcoumentHeader from './DcoumentHeader'
+import DocumentHeader from './DocumentHeader'
 import DocumentInfo from './DocumentInfo'
 import RichDocumentEditor from './RichDocumentEditor'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,7 @@ function DocumentEditorSection({ params }) {
   return (
     <div className='relative'>
       {/* Header  */}
-      <DcoumentHeader />
+      <DocumentHeader />
 
       {/* Document Info  */}
       <DocumentInfo params={params} />
