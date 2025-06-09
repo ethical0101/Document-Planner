@@ -8,9 +8,9 @@ import { toast } from "@/hooks/use-toast";
 
 function DocumentList({ documentList, params }) {
     const router = useRouter();
-    
+
     const DeleteDocument = async (docId)=>{
-        await deleteDoc(doc(db, "workspacedocuments", docId));
+        await deleteDoc(doc(db, "workspaceDocuments", docId));
     }
     console.log("DocumentLIst params",params);
     console.log(documentList);
@@ -30,14 +30,14 @@ function DocumentList({ documentList, params }) {
                                 ${doc?.id == params?.documentid && 'bg-white'}
                             `}
                         >
+                        <div className='flex items-center gap-2'>
                             {/* Render StickyNote icon if no Emoji is present */}
-                            {!doc.Emoji && <StickyNote className="w-[20px] h-[20px]" />}
-                            
-                            {/* Display document name and Emoji */}
+                            {!doc.emoji && <StickyNote className="w-[20px] h-[20px]" />}
                             <h2 className="flex gap-2">
-                                {doc?.Emoji} {doc.documentName}
+                                {doc?.emoji} {doc.documentName}
                             </h2>
                             <DocumentOptions className="mt-5" doc={doc} deleteDocument={(docId)=>DeleteDocument(docId)}/>
+                        </div>
                         </div>
                     </div>
                 );

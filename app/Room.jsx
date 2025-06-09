@@ -13,7 +13,7 @@ export function Room({ params , children}) {
   console.log("Room jsx params->",params);
   console.log("Room jsx children->",children);
   return (
-    <LiveblocksProvider 
+    <LiveblocksProvider
     authEndpoint={"/api/liveblocks-auth?roomId=" + params?.documentid}
     resolveUsers={async ( { userIds }) => {
         console.log("Room jsx UserId's==>",userIds);
@@ -36,7 +36,7 @@ export function Room({ params , children}) {
             console.log(doc.data());
             userList.push(doc.data());
         })
-    
+
         if (text) {
             // Filter any way you'd like, e.g. checking if the name matches
             userList = userList.filter((user) => user.name.includes(text));
@@ -46,11 +46,13 @@ export function Room({ params , children}) {
         return userList.map((user) => user.email);
       }}
     >
-      <RoomProvider id={params?.documentid}>
-        <ClientSideSuspense fallback={<div>Loading…</div>}>
-          {children}
-        </ClientSideSuspense>
-      </RoomProvider>
+      {params?.documentid && (
+        <RoomProvider id={params.documentid}>
+          <ClientSideSuspense fallback={<div>Loading…</div>}>
+            {children}
+          </ClientSideSuspense>
+        </RoomProvider>
+      )}
     </LiveblocksProvider>
   );
 }

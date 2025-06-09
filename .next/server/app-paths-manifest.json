@@ -1,12 +1,7 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/(routes)/dashboard/page": "app/(routes)/dashboard/page.js",
-  "/(routes)/workspace/[workspaceid]/[documentid]/page": "app/(routes)/workspace/[workspaceid]/[documentid]/page.js",
-  "/(routes)/workspace/[workspaceid]/page": "app/(routes)/workspace/[workspaceid]/page.js",
-  "/(auth)/sign-up/[[...sign-up]]/page": "app/(auth)/sign-up/[[...sign-up]]/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/api/liveblocks-auth/route": "app/api/liveblocks-auth/route.js",
-  "/(auth)/sign-in/[[...sign-in]]/page": "app/(auth)/sign-in/[[...sign-in]]/page.js",
   "/page": "app/page.js",
-  "/(routes)/createworkspace/page": "app/(routes)/createworkspace/page.js"
+  "/api/liveblocks-auth/route": "app/api/liveblocks-auth/route.js",
+  "/(routes)/dashboard/page": "app/(routes)/dashboard/page.js",
+  "/(routes)/workspace/[workspaceid]/[documentid]/page": "app/(routes)/workspace/[workspaceid]/[documentid]/page.js"
 }

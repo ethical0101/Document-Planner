@@ -1,3 +1,4 @@
+"use client";
 import Logo from "@/app/_components/Logo";
 import NotificationBox from './NotificationBox'
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ const SideNav = ({ params }) => {
   const GetDocumentList = () => {
     // const workId = (params)=>(params?.workspaceid)?params?.workspaceid:params.params?.workspaceid
     const q = query(
-      collection(db, "workspacedocuments"),
+      collection(db, "workspaceDocuments"),
       where("workspaceId", "==", params.workspaceid)
     );
 
@@ -52,7 +53,7 @@ const SideNav = ({ params }) => {
     console.log("Creating document with workspace ID:", params?.workspaceid);
 
     // Ensure workspaceId is accessed correctly
-    await setDoc(doc(db, "workspacedocuments", docId.toString()), {
+    await setDoc(doc(db, "workspaceDocuments", docId.toString()), {
       workspaceId: params?.workspaceid, // Use workspaceid consistently
       createdBy: user?.primaryEmailAddress?.emailAddress,
       coverImage: null,

@@ -1,4 +1,4 @@
-// File: C:\Users\kommi\OneDrive\Desktop\PROJECTS\Document Planner\document-planner-app\app\layout.js
+// File: E:\Document-Planner\app\layout.js
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

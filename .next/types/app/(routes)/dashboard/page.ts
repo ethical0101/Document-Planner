@@ -1,4 +1,4 @@
-// File: C:\Users\kommi\OneDrive\Desktop\PROJECTS\Document Planner\document-planner-app\app\(routes)\dashboard\page.js
+// File: E:\Document-Planner\app\(routes)\dashboard\page.jsx
 import * as entry from '../../../../../app/(routes)/dashboard/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,4 +1,4 @@
-// File: C:\Users\kommi\OneDrive\Desktop\PROJECTS\Document Planner\document-planner-app\app\api\liveblocks-auth\route.ts
+// File: E:\Document-Planner\app\api\liveblocks-auth\route.js
 import * as entry from '../../../../../app/api/liveblocks-auth/route.js'
 import type { NextRequest } from 'next/server.js'
 
