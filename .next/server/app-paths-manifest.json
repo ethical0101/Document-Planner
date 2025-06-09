@@ -1,6 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/api/liveblocks-auth/route": "app/api/liveblocks-auth/route.js",
-  "/(routes)/dashboard/page": "app/(routes)/dashboard/page.js",
-  "/(routes)/workspace/[workspaceid]/[documentid]/page": "app/(routes)/workspace/[workspaceid]/[documentid]/page.js"
-}
