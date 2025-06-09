@@ -1,100 +1,131 @@
-import React, { useEffect, useRef } from "react";
-import EditorJS from "@editorjs/editorjs";
-import Quote from "@editorjs/quote";
-import Table from "@editorjs/table";
-import CodeTool from "@editorjs/code";
+import React, { useEffect, useRef, useState } from 'react'
+import EditorJS from '@editorjs/editorjs';
+import Header from '@editorjs/header';
+import Delimiter from '@editorjs/delimiter';
+import Alert from 'editorjs-alert';
 import List from "@editorjs/list";
-import Header from "@editorjs/header";
-import Checklist from "@editorjs/checklist";
-import ImageTool from "@editorjs/image";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "@/config/firebaseConfig";
-import { useUser } from "@clerk/nextjs";
+import NestedList from '@editorjs/nested-list';
+import Checklist from '@editorjs/checklist'
+import Embed from '@editorjs/embed';
+import SimpleImage from 'simple-image-editorjs';
+import Table from '@editorjs/table'
+import CodeTool from '@editorjs/code';
+import { TextVariantTune } from '@editorjs/text-variant-tune';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from '@/config/firebaseConfig';
+import { useUser } from '@clerk/nextjs';
+import Paragraph from '@editorjs/paragraph';
+
 
 function RichDocumentEditor({ params }) {
 
-  console.log("This is rich doc params->",params)
-  const editorRef = useRef(null); // Reference for the editor instance
+  const ref = useRef();
+  let editorRef = useRef(null);
+  let editor;
   const { user } = useUser();
-  let isFetched = false;
-
-  // Initialize the editor only once when the user is available
+  const [documentOutput, setDocumentOutput] = useState([]);
+  let isFetched = useRef(false);
   useEffect(() => {
-    if (user && !editorRef.current) {
-      initEditor(); // Initialize EditorJS
+    if (user) {
+      InitEditor();
     }
-  }, [user]);
-
-  const saveDocument = async () => {
-    const outputData = await editorRef.current.save();
-    console.log(outputData);
-    const docRef = doc(db, 'documentOutput', params?.documentid);
-    await updateDoc(docRef, {
-      output: outputData,
-      EditedBy: user?.primaryEmailAddress?.emailAddress,
-    });
-    
-  };
-
-  const getDocumentOutput = () => {
-    const unsubscribe = onSnapshot(
-      doc(db, 'documentOutput', params?.documentid),
-      (doc) => {
-        const data = doc.data()?.output;
-        console.log("Output Data in richdoc", data)
-        if (!isFetched || data?.EditedBy !== user?.primaryEmailAddress?.emailAddress) {
-          if (data) {
-            editorRef.current.render(doc.data()?.output); // Pass the object directly, not wrapped in an array
-          }
-          isFetched = true;
-        }
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.destroy();
+        editorRef.current = null;
       }
-    );
-  };
+      isFetched.current = false;
+    };
+  }, [user])
 
-  const initEditor = () => {
-    editorRef.current = new EditorJS({
-      onChange: () => {
-        saveDocument(); // Save directly without debounce
-      },
-      onReady: () => {
-        getDocumentOutput();
-      },
-      holder: "editorjs",
-      tools: {
-        header: Header,
-        table: Table,
-        checklist: {
-          class: Checklist,
-          inlineToolbar: true,
+  /**
+   * Used to save Document
+   */
+  const SaveDocument = () => {
+    if (!editorRef.current) return;
+    editorRef.current.save().then(async (outputData) => {
+      const docRef = doc(db, 'documentOutput', params?.documentid);
+      await updateDoc(docRef, {
+        output: JSON.stringify(outputData),
+        editedBy: user?.primaryEmailAddress?.emailAddress
+      })
+    })
+  }
+
+  const GetDocumentOutput = () => {
+    return onSnapshot(doc(db, 'documentOutput', params?.documentid),
+      (docSnap) => {
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+        if ((data?.editedBy !== user?.primaryEmailAddress?.emailAddress || !isFetched.current) && data?.output) {
+          try {
+            editorRef.current && editorRef.current.render(JSON.parse(data.output));
+            isFetched.current = true;
+          } catch (e) {
+            // handle parse/render error
+          }
+        }
+      });
+  }
+
+  const InitEditor = () => {
+    if (!editorRef.current) {
+      editorRef.current = new EditorJS({
+        onChange: (api, event) => {
+          SaveDocument();
         },
-        list: {
-          class: List,
-          inlineToolbar: true,
-          config: {
-            defaultStyle: "unordered",
+        onReady: () => {
+          // Subscribe to Firestore updates and clean up on destroy
+          if (editorRef.current._unsubscribe) editorRef.current._unsubscribe();
+          editorRef.current._unsubscribe = GetDocumentOutput();
+        },
+        holder: 'editorjs',
+        tools: {
+          header: Header,
+          delimiter: Delimiter,
+          paragraph:Paragraph,
+          alert: {
+            class: Alert,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+A',
+            config: {
+              alertTypes: ['primary', 'secondary', 'info', 'success', 'warning', 'danger', 'light', 'dark'],
+              defaultType: 'primary',
+              messagePlaceholder: 'Enter something',
+            }
           },
-        },
-        image: {
-          class: ImageTool,
-          config: {
-            endpoints: {
-              byFile: "http://localhost:8008/uploadFile", // Your backend file uploader endpoint
-              byUrl: "http://localhost:8008/fetchUrl", // Your endpoint that provides uploading by URL
+          table: Table,
+          list: {
+            class: List,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+L',
+            config: {
+              defaultStyle: 'unordered'
             },
           },
-        },
-        quote: Quote,
-        code: CodeTool,
-      },
-    });
-  };
+          checklist: {
+            class: Checklist,
+            shortcut: 'CMD+SHIFT+C',
+            inlineToolbar: true,
+          },
+          image: SimpleImage,
+          code: {
+            class: CodeTool,
+            shortcut: 'CMD+SHIFT+P'
+          },
+          //   textVariant: TextVariantTune
 
+
+        },
+
+      });
+    }
+  }
   return (
-    <div className="mr-20 lg:-ml-40">
-      <div id="editorjs"></div>
+    <div className=''>
+      <div id='editorjs' className='w-[70%]'></div>
     </div>
-  );
+  )
 }
 
-export default RichDocumentEditor;
+export default RichDocumentEditor

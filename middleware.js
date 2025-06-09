@@ -9,7 +9,13 @@ export const config = {
   ],
 };
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+// Clerk middleware protects /dashboard and its subroutes.
+// To make sign-out redirect to /dashboard, configure Clerk's signOutUrl in your ClerkProvider (see layout.js).
+
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/workspace(.*)',
+]);
 export default clerkMiddleware((auth, req) => {
     if (isProtectedRoute(req)) auth().protect()
   })

@@ -5,7 +5,8 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCK_SK,
 });
 
-export async function POST(request: Request) {
+export async function POST(request) {
+     
   // Get the current user from your database
   const user = await currentUser();
 
@@ -15,9 +16,9 @@ export async function POST(request: Request) {
   );
 
   const {room}=await request.json();
-  const  {searchParams} = new URL(request?.url)
-  const roomId = searchParams.get('roomId');
-  console.log(room);
+  const {searchParams}=new URL(request?.url);
+  const roomId=searchParams.get('roomId');
+  console.log("Room",roomId);
   session.allow(roomId,session?.FULL_ACCESS);
 
   // Authorize the user and return the result

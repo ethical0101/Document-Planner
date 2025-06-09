@@ -1,52 +1,43 @@
-"use client";
-import Logo from "@/app/_components/Logo";
-import { db } from "@/config/firebaseConfig";
-import {
-  OrganizationSwitcher,
-  useAuth,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
-import { doc, setDoc } from "firebase/firestore";
-import React, { useEffect } from "react";
+"use client"
+import Logo from '@/app/_components/Logo'
+import { db } from '@/config/firebaseConfig';
+import { OrganizationSwitcher, UserButton, useAuth, useUser } from '@clerk/nextjs'
+import { doc, setDoc } from 'firebase/firestore';
+import React, { useEffect } from 'react'
 
-
-
-
-const Header = () => {
+function Header() {
   const { orgId } = useAuth();
   const { user } = useUser();
 
-  console.log(orgId);
-  const docId = user?.primaryEmailAddress?.emailAddress;
-
   useEffect(()=>{
-    user && saveUserData();  
+    user&&saveUserData();
   },[user])
-  
+
+  /**
+   * Used to save user data
+   */
   const saveUserData = async () => {
+     const docId = user?.primaryEmailAddress?.emailAddress
     try {
-      await setDoc(doc(db, "DocPlannerUsers", docId), {
+      await setDoc(doc(db, 'DocPlannerUsers', docId), {
         name: user?.fullName,
         avatar: user?.imageUrl,
-        email: user?.primaryEmailAddress?.emailAddress,
-      });
-    } catch (e) {
-      
+        email: user?.primaryEmailAddress?.emailAddress
+      })
     }
-  };
+    catch (e) {
 
+    }
+  }
   return (
-    <div className="flex items-center justify-between px-5 py-3 shadow-sm">
+    <div className='flex items-center justify-between p-3 shadow-sm'>
       <Logo />
-
       <OrganizationSwitcher
-        afterCreateOrganizationUrl={"/dashboard"}
-        afterLeaveOrganizationUrl={"/dashboard"}
-      />
+        afterLeaveOrganizationUrl={'/dashboard'}
+        afterCreateOrganizationUrl={'/dashboard'} />
       <UserButton />
     </div>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

@@ -1,12 +1,14 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import React from 'react'
 
-const Logo = () => {
+function Logo() {
   return (
-    <div className='flex items-center gap-2'>
-      <Image src={'/Assets/logo.png'} alt="Logo" width={30} height={30}/>
-      <h2 className='font-extrabold text-xl'>Document Planner</h2>
-    </div>
+    <Link href={'/dashboard'} className='flex items-center gap-2'>
+        <Image src={'/Assets/logo.png'} alt='logo'
+        width={30} height={30} />
+        <h2 className='text-xl font-bold'>Document Planner</h2>
+    </Link>
   )
 }
 
