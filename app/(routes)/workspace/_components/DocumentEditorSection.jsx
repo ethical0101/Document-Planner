@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import DocumentHeader from './DocumentHeader'
-import DocumentInfo from './DocumentInfo'
+import DocumentInfo from './Documentinfo'
 import RichDocumentEditor from './RichDocumentEditor'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, X } from 'lucide-react'
