@@ -105,3 +105,9 @@ h6.ce-header {
   --lb-radius: 0.5rem;
   --lb-z-index: 60;
 }
+
+/* Liveblocks floating UI (mention suggestions, toolbars) must sit above the
+   fixed comments panel; Liveblocks copies this z-index to the floating layer. */
+.lb-portal {
+  z-index: 100;
+}

@@ -126,11 +126,11 @@ Built on [Editor.js](https://editorjs.io/), with these blocks:
 > Headings · Paragraphs · Bulleted & numbered lists · Checklists · Tables · Code blocks · Alerts · Delimiters · Images
 
 - **Autosave**: changes are debounced and saved to Firestore
-- **Live sync**: collaborators' edits appear without a refresh
+- **Smooth live sync**: block-level merging shows collaborators' edits instantly without moving your cursor or closing the mobile keyboard
 
 ### 💬 Collaboration
 - **Threaded comments** powered by Liveblocks
-- **@mentions** with autocomplete for teammates
+- **@mentions** with autocomplete, limited to members of the workspace organization
 - **Notifications inbox** with an unread badge
 
 ### 📱 Responsive Design
@@ -408,7 +408,8 @@ Any platform that supports **Next.js 16** on **Node.js 20.9 or newer** works as 
 
 - ✅ **0 known vulnerabilities**: all dependencies are on patched versions (`npm audit`).
 - ✅ **Secrets stay server-side**: `CLERK_SECRET_KEY` and `LIVEBLOCK_SK` are never sent to the browser.
-- ✅ **Route protection**: `/dashboard`, `/workspace`, `/createworkspace` and `/api/liveblocks-auth` require a signed-in user.
+- ✅ **Route protection**: `/dashboard`, `/workspace`, `/createworkspace` and the `/api/*` routes require a signed-in user.
+- ✅ **Scoped @mentions**: suggestions only include members of the document's workspace organization (or just the owner for personal workspaces).
 - ✅ **Room authorization**: the Liveblocks auth endpoint validates the room id and checks that the user owns the workspace or belongs to its organization before it grants access.
 - ✅ **No secrets in git**: `.env*` files are ignored, and `.env.example` contains placeholders only.
 

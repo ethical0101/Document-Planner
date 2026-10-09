@@ -6,6 +6,7 @@ const isProtectedRoute = createRouteMatcher([
   "/workspace(.*)",
   "/createworkspace(.*)",
   "/api/liveblocks-auth(.*)",
+  "/api/mention-suggestions(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
