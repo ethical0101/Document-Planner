@@ -258,6 +258,8 @@ function RichDocumentEditor({ documentId }) {
               return;
             }
             enqueue(applyRemote);
+          }, () => {
+            // No access or offline; the page shows the access state.
           });
         },
       });

@@ -1,9 +1,5 @@
-import React from 'react'
+import FirebaseAuthGate from "@/components/FirebaseAuthGate";
 
-function layout({children}) {
-  return (
-    <div>{children}</div>
-  )
+export default function RoutesLayout({ children }) {
+  return <FirebaseAuthGate>{children}</FirebaseAuthGate>;
 }
-
-export default layout

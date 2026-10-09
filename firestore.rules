@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Firestore security rules for Document Planner.
+//
+// Users sign in to Firebase with a custom token minted from their Clerk
+// session (see app/api/firebase-token/route.js). The token carries:
+//   - userEmail: the user's primary email address
+//   - orgs:      ids of the Clerk organizations the user belongs to
+//
+// Every workspace, document and document output stores an `orgId`, which is
+// either a Clerk organization id or the owner's email (personal workspace).
+// A user can access data whose orgId is their email or one of their orgs.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.userEmail is string;
+    }
+
+    function email() {
+      return request.auth.token.userEmail;
+    }
+
+    function canAccess(orgId) {
+      return signedIn()
+        && orgId is string
+        && (orgId == email()
+            || (request.auth.token.orgs is list && orgId in request.auth.token.orgs));
+    }
+
+    function orgIdUnchanged() {
+      return request.resource.data.orgId == resource.data.orgId;
+    }
+
+    function workspacePath(workspaceId) {
+      return /databases/$(database)/documents/Workspace/$(string(workspaceId));
+    }
+
+    // Public profile used for comment authors and @mentions.
+    match /DocPlannerUsers/{userEmail} {
+      allow read: if signedIn();
+      allow write: if signedIn() && userEmail == email();
+    }
+
+    match /Workspace/{workspaceId} {
+      allow read, delete: if canAccess(resource.data.orgId);
+      allow create: if canAccess(request.resource.data.orgId)
+        && request.resource.data.createdBy == email();
+      allow update: if canAccess(resource.data.orgId) && orgIdUnchanged();
+    }
+
+    match /workspaceDocuments/{documentId} {
+      allow read, delete: if canAccess(resource.data.orgId);
+      // New documents must belong to an existing workspace with the same owner.
+      // getAfter() also allows creating a workspace and its first document in
+      // one batch.
+      allow create: if canAccess(request.resource.data.orgId)
+        && getAfter(workspacePath(request.resource.data.workspaceId)).data.orgId
+           == request.resource.data.orgId;
+      allow update: if canAccess(resource.data.orgId) && orgIdUnchanged();
+    }
+
+    match /documentOutput/{documentId} {
+      allow read, delete: if canAccess(resource.data.orgId);
+      allow create: if canAccess(request.resource.data.orgId);
+      allow update: if canAccess(resource.data.orgId) && orgIdUnchanged();
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

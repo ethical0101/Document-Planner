@@ -5,15 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { ArrowLeft, Bell, Loader2Icon, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/app/_components/Logo";
 import NotificationBox from "@/app/_components/NotificationBox";
 import { Button } from "@/components/ui/button";
 import { db } from "@/config/firebaseConfig";
-import { createDocument } from "@/lib/documents";
-import { workspaceIdVariants } from "@/lib/workspace";
+import { createDocument, workspaceDocumentsQuery } from "@/lib/documents";
 import DocumentList from "./DocumentList";
 
 const MAX_DOCUMENTS = 50;
@@ -26,29 +25,33 @@ function SideNav({ workspaceId, onClose }) {
   const [workspace, setWorkspace] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Live list of documents in this workspace.
+  // Live workspace details (name, emoji, owner).
   useEffect(() => {
     if (!workspaceId) return;
-    const q = query(
-      collection(db, "workspaceDocuments"),
-      where("workspaceId", "in", workspaceIdVariants(workspaceId))
+    return onSnapshot(
+      doc(db, "Workspace", String(workspaceId)),
+      (snap) => setWorkspace(snap.exists() ? { ...snap.data(), id: snap.id } : null),
+      () => setWorkspace(null)
     );
-    return onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((d) => d.data());
-      docs.sort((a, b) => (a.documentName ?? "").localeCompare(b.documentName ?? ""));
-      setDocumentList(docs);
-    });
   }, [workspaceId]);
 
-  // Live workspace details (name, emoji).
+  // Live list of documents in this workspace.
+  const orgId = workspace?.orgId;
   useEffect(() => {
-    if (!workspaceId) return;
-    return onSnapshot(doc(db, "Workspace", String(workspaceId)), (snap) => {
-      setWorkspace(snap.exists() ? snap.data() : null);
-    });
-  }, [workspaceId]);
+    if (!orgId) return;
+    return onSnapshot(
+      workspaceDocumentsQuery({ id: workspaceId, orgId }),
+      (snapshot) => {
+        const docs = snapshot.docs.map((d) => d.data());
+        docs.sort((a, b) => (a.documentName ?? "").localeCompare(b.documentName ?? ""));
+        setDocumentList(docs);
+      },
+      () => setDocumentList([])
+    );
+  }, [workspaceId, orgId]);
 
   const onCreateDocument = async () => {
+    if (!orgId) return;
     if (documentList.length >= MAX_DOCUMENTS) {
       toast.error(`A workspace can hold up to ${MAX_DOCUMENTS} documents.`);
       return;
@@ -57,6 +60,7 @@ function SideNav({ workspaceId, onClose }) {
     try {
       const docId = await createDocument({
         workspaceId,
+        orgId,
         createdBy: user?.primaryEmailAddress?.emailAddress,
       });
       router.push(`/workspace/${workspaceId}/${docId}`);
@@ -99,7 +103,12 @@ function SideNav({ workspaceId, onClose }) {
         <h2 className="font-medium truncate" title={workspace?.workspaceName}>
           {workspace?.emoji} {workspace?.workspaceName ?? "Workspace"}
         </h2>
-        <Button size="sm" onClick={onCreateDocument} disabled={loading} aria-label="New document">
+        <Button
+          size="sm"
+          onClick={onCreateDocument}
+          disabled={loading || !orgId}
+          aria-label="New document"
+        >
           {loading ? <Loader2Icon className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
         </Button>
       </div>

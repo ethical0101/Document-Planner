@@ -1,9 +1,11 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Firebase web configuration. These values identify the Firebase project and
-// are safe to expose to the browser; access is governed by Firestore rules.
+// are safe to expose to the browser; access is governed by Firestore rules
+// (see firestore.rules).
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain:
@@ -21,6 +23,9 @@ const firebaseConfig = {
 // Reuse the existing app during hot reloads instead of initializing twice.
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+// Signed in with a custom token minted from the Clerk session (see
+// components/FirebaseAuthGate.jsx); Firestore rules rely on it.
+export const auth = getAuth(app);
 
 // Only initialize analytics in the browser and if supported
 export async function getAnalyticsIfSupported() {

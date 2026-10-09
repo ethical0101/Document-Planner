@@ -3,13 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { doc, getDoc, getDocs, limit } from "firebase/firestore";
 import { FilePlus, Loader2Icon, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { db } from "@/config/firebaseConfig";
-import { createDocument } from "@/lib/documents";
-import { workspaceIdVariants } from "@/lib/workspace";
+import { createDocument, workspaceDocumentsQuery } from "@/lib/documents";
 import { useSidebar } from "./WorkspaceShell";
 
 /**
@@ -21,18 +20,27 @@ function WorkspaceLanding({ workspaceId }) {
   const { user } = useUser();
   const { setOpen } = useSidebar();
   const [empty, setEmpty] = useState(false);
+  const [missing, setMissing] = useState(false);
+  const [workspace, setWorkspace] = useState(null);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const snap = await getDocs(
-        query(
-          collection(db, "workspaceDocuments"),
-          where("workspaceId", "in", workspaceIdVariants(workspaceId)),
-          limit(1)
-        )
-      );
+      let workspaceData = null;
+      try {
+        const workspaceSnap = await getDoc(doc(db, "Workspace", String(workspaceId)));
+        if (workspaceSnap.exists()) workspaceData = { ...workspaceSnap.data(), id: workspaceSnap.id };
+      } catch {
+        // Not found or no access.
+      }
+      if (cancelled) return;
+      if (!workspaceData) {
+        setMissing(true);
+        return;
+      }
+      setWorkspace(workspaceData);
+      const snap = await getDocs(workspaceDocumentsQuery(workspaceData, limit(1)));
       if (cancelled) return;
       if (snap.empty) setEmpty(true);
       else router.replace(`/workspace/${workspaceId}/${snap.docs[0].id}`);
@@ -47,6 +55,7 @@ function WorkspaceLanding({ workspaceId }) {
     try {
       const docId = await createDocument({
         workspaceId,
+        orgId: workspace?.orgId,
         createdBy: user?.primaryEmailAddress?.emailAddress,
       });
       router.replace(`/workspace/${workspaceId}/${docId}`);
@@ -69,7 +78,15 @@ function WorkspaceLanding({ workspaceId }) {
         </button>
       </div>
       <div className="flex flex-col items-center justify-center gap-4 px-6 text-center min-h-[70vh]">
-        {empty ? (
+        {missing ? (
+          <>
+            <h2 className="text-xl font-semibold">Workspace not found</h2>
+            <p className="text-gray-500">
+              It may have been deleted, or you don&apos;t have access to it.
+            </p>
+            <Button onClick={() => router.push("/dashboard")}>Back to dashboard</Button>
+          </>
+        ) : empty ? (
           <>
             <FilePlus className="w-12 h-12 text-primary" />
             <h2 className="text-xl font-semibold">This workspace has no documents yet</h2>

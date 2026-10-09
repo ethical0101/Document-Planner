@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { SmilePlus } from "lucide-react";
 import { toast } from "sonner";
 import CoverPicker from "@/app/_components/CoverPicker";
@@ -10,21 +10,16 @@ import EmojiPickerComponent from "@/app/_components/EmojiPickerComponent";
 import { db } from "@/config/firebaseConfig";
 import { coverImageSrc } from "@/lib/workspace";
 
-function DocumentInfo({ documentId }) {
-  const [documentInfo, setDocumentInfo] = useState(null);
-  const [documentName, setDocumentName] = useState("");
+function DocumentInfo({ documentId, documentInfo }) {
+  const [documentName, setDocumentName] = useState(documentInfo?.documentName ?? "");
   // While the title is being edited, remote updates must not overwrite it.
   const editingName = useRef(false);
 
+  // Follow renames made elsewhere, except while the title is being edited.
+  const remoteName = documentInfo?.documentName ?? "";
   useEffect(() => {
-    if (!documentId) return;
-    return onSnapshot(doc(db, "workspaceDocuments", documentId), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      setDocumentInfo(data);
-      if (!editingName.current) setDocumentName(data?.documentName ?? "");
-    });
-  }, [documentId]);
+    if (!editingName.current) setDocumentName(remoteName);
+  }, [remoteName]);
 
   const updateDocumentInfo = async (key, value) => {
     try {

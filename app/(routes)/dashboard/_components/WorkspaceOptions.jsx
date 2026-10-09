@@ -52,7 +52,7 @@ function WorkspaceOptions({ workspace, onRenamed, onDeleted, className = "" }) {
   const onDelete = async () => {
     setBusy(true);
     try {
-      await deleteWorkspace(workspace.id);
+      await deleteWorkspace(workspace);
       toast("Workspace deleted");
       setDeleteOpen(false);
       onDeleted?.();

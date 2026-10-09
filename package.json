@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "migrate": "node --env-file=.env.local scripts/migrate-org-ids.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.13",
@@ -32,6 +33,7 @@
     "editorjs-alert": "^1.1.4",
     "emoji-picker-react": "^4.22.3",
     "firebase": "^12.19.0",
+    "firebase-admin": "^13.10.0",
     "lucide-react": "^0.577.0",
     "next": "^16.4.0",
     "next-themes": "^0.4.6",
@@ -52,7 +54,8 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "@grpc/grpc-js": "^1.13.7"
+    "@grpc/grpc-js": "^1.13.7",
+    "uuid": "^11.1.1"
   },
   "engines": {
     "node": ">=20.9.0"

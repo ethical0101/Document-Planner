@@ -148,7 +148,7 @@ Built on [Editor.js](https://editorjs.io/), with these blocks:
 | **UI Library**     | [React 19](https://react.dev/)                                                                          |
 | **Styling**        | [Tailwind CSS 4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Radix UI](https://www.radix-ui.com/) |
 | **Authentication** | [Clerk](https://clerk.com/) (users, sessions, organizations)                                           |
-| **Database**       | [Cloud Firestore](https://firebase.google.com/docs/firestore) (Firebase JS SDK v12)                    |
+| **Database**       | [Cloud Firestore](https://firebase.google.com/docs/firestore) (Firebase JS SDK v12, Admin SDK v13) with security rules |
 | **Real-time**      | [Liveblocks](https://liveblocks.io/) (comments, mentions, inbox notifications)                         |
 | **Editor**         | [Editor.js](https://editorjs.io/) and plugins                                                           |
 | **Icons**          | [Lucide](https://lucide.dev/)                                                                           |
@@ -165,19 +165,22 @@ flowchart LR
     U["👤 User (Browser)"] -->|Sign in| C[Clerk]
     U -->|Pages & UI| N["Next.js 16 App"]
     N -->|proxy.js route protection| C
-    U <-->|Read / write documents<br/>real-time listeners| F[("Cloud Firestore")]
+    U -->|Exchange Clerk session| T["/api/firebase-token"]
+    T -->|Custom token with<br/>email + org claims| U
+    U <-->|Read / write documents<br/>enforced by security rules| F[("Cloud Firestore")]
     U <-->|Comments, mentions,<br/>notifications| L[Liveblocks]
     L -->|Request access token| A["/api/liveblocks-auth"]
     A -->|Verify session| C
-    A -->|Check workspace access| F
+    A -->|Check workspace access<br/>via Admin SDK| F
 ```
 
 **How a document session works:**
 
 1. **Clerk** signs the user in. `proxy.js` blocks protected routes for anyone who isn't signed in.
-2. The **workspace layout** loads the sidebar and starts a live Firestore listener for the workspace's documents.
-3. Opening a document joins a **Liveblocks room** whose id is the document id. Before it issues a token, `/api/liveblocks-auth` checks that the user owns the workspace or belongs to its organization.
-4. **Editor.js** loads the saved content from Firestore, autosaves changes after a short delay, and renders collaborators' updates as they arrive.
+2. **Firebase sign-in:** `/api/firebase-token` exchanges the Clerk session for a Firebase custom token that carries the user's email and organization ids. The app signs in to Firebase with it, and **Firestore security rules** only allow access to workspaces owned by that email or organizations.
+3. The **workspace layout** loads the sidebar and starts a live Firestore listener for the workspace's documents.
+4. Opening a document joins a **Liveblocks room** whose id is the document id. Before it issues a token, `/api/liveblocks-auth` checks that the user owns the workspace or belongs to its organization.
+5. **Editor.js** loads the saved content from Firestore and autosaves changes after a short delay. Collaborators' edits are merged block by block, so your cursor and mobile keyboard are never disturbed.
 
 ---
 
@@ -190,7 +193,7 @@ flowchart LR
 | [Node.js](https://nodejs.org/)                           | **20.9 or newer**                       |
 | npm                                                      | Comes with Node.js                      |
 | [Clerk](https://dashboard.clerk.com/) account            | Free tier is enough                     |
-| [Firebase](https://console.firebase.google.com/) project | Cloud Firestore enabled                 |
+| [Firebase](https://console.firebase.google.com/) project | Cloud Firestore + Authentication enabled |
 | [Liveblocks](https://liveblocks.io/dashboard) account    | Free tier is enough                     |
 
 ### Installation
@@ -232,10 +235,20 @@ Then fill in your keys. See [Environment Variables](#-environment-variables).
 <summary><b>Firebase</b></summary>
 
 1. Create a project in the [Firebase Console](https://console.firebase.google.com/).
-2. Add a **Web app** and copy its config values.
+2. Add a **Web app** and copy its config values into the `NEXT_PUBLIC_FIREBASE_*` variables.
 3. Enable **Cloud Firestore**.
-4. Set `NEXT_PUBLIC_FIREBASE_*` in `.env.local` to point the app at your project.
-5. Configure Firestore security rules before going to production. See [Security](#-security).
+4. Open **Authentication** and click **Get started**. This enables Firebase Auth, which the app uses with custom tokens; no sign-in provider needs to be turned on.
+5. Go to *Project settings → Service accounts → Generate new private key*. From the downloaded JSON, copy `project_id`, `client_email` and `private_key` into `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`.
+6. Deploy the security rules from [`firestore.rules`](firestore.rules):
+   ```bash
+   npx firebase-tools login
+   npx firebase-tools deploy --only firestore:rules --project <your-project-id>
+   ```
+7. **Upgrading an existing project?** Run the one-time migration so older documents get their `orgId` (dry run first, then apply):
+   ```bash
+   npm run migrate
+   npm run migrate -- --apply
+   ```
 
 </details>
 
@@ -274,6 +287,10 @@ Create a `.env.local` file in the project root. Use [`.env.example`](.env.exampl
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`|    ➖    | Client | Firebase messaging sender id             |
 | `NEXT_PUBLIC_FIREBASE_APP_ID`             |    ➖    | Client | Firebase app id                          |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`     |    ➖    | Client | Google Analytics measurement id          |
+| `FIREBASE_PROJECT_ID`                     |    ✅    | Server | Service account project id               |
+| `FIREBASE_CLIENT_EMAIL`                   |    ✅    | Server | Service account client email             |
+| `FIREBASE_PRIVATE_KEY`                    |    ✅    | Server | Service account private key (`
+`-escaped) |
 | `LIVEBLOCK_SK`                            |    ✅    | Server | Liveblocks secret key                    |
 
 > [!CAUTION]
@@ -320,15 +337,23 @@ Document-Planner/
 │   │       │   └── [documentid]/       # Document editor page
 │   │       └── _components/            # Sidebar, editor, comments, notifications…
 │   ├── _components/                    # Landing page, logo, pickers, auth layout
-│   ├── api/liveblocks-auth/route.js    # Authorizes users for Liveblocks rooms
+│   ├── api/
+│   │   ├── firebase-token/             # Mints Firebase custom tokens from Clerk sessions
+│   │   ├── liveblocks-auth/            # Authorizes users for Liveblocks rooms
+│   │   └── mention-suggestions/        # Workspace members for @mentions
 │   ├── Room.jsx                        # Liveblocks client & room providers
 │   ├── globals.css                     # Tailwind CSS 4 theme & global styles
 │   └── layout.js                       # Root layout (Clerk, fonts, toaster, metadata)
-├── components/ui/                      # shadcn/ui primitives
+├── components/
+│   ├── FirebaseAuthGate.jsx            # Signs in to Firebase with the Clerk session
+│   └── ui/                             # shadcn/ui primitives
 ├── config/firebaseConfig.js            # Firebase initialization
 ├── docs/screenshots/                   # README screenshots
-├── lib/                                # Shared helpers (documents, workspaces, utils)
+├── lib/                                # Shared helpers (documents, block sync, utils)
+│   └── server/                         # Server-only helpers (Firebase Admin, access checks)
 ├── public/Assets/                      # Logo, cover images & illustrations
+├── scripts/migrate-org-ids.mjs         # One-time Firestore data migration
+├── firestore.rules                     # Firestore security rules
 ├── proxy.js                            # Clerk route protection (Next.js proxy)
 ├── next.config.mjs                     # Next.js configuration
 ├── .env.example                        # Environment variable template
@@ -361,10 +386,12 @@ erDiagram
         string documentName
         string emoji
         string coverImage
+        string orgId "copied from workspace"
         string createdBy
     }
     documentOutput {
         string docId PK
+        string orgId "copied from workspace"
         string output "Editor.js JSON"
         string editedBy
     }
@@ -386,6 +413,7 @@ erDiagram
 | `npm run dev`   | Start the development server with hot reload |
 | `npm run build` | Create an optimized production build         |
 | `npm run start` | Serve the production build                   |
+| `npm run migrate` | One-time data migration for Firestore rules (add `-- --apply` to write) |
 
 ---
 
@@ -393,13 +421,14 @@ erDiagram
 
 ### Deploy to Vercel (recommended)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ethical0101/Document-Planner&env=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,CLERK_SECRET_KEY,NEXT_PUBLIC_CLERK_SIGN_IN_URL,NEXT_PUBLIC_CLERK_SIGN_UP_URL,NEXT_PUBLIC_FIREBASE_API_KEY,LIVEBLOCK_SK)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ethical0101/Document-Planner&env=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,CLERK_SECRET_KEY,NEXT_PUBLIC_CLERK_SIGN_IN_URL,NEXT_PUBLIC_CLERK_SIGN_UP_URL,NEXT_PUBLIC_FIREBASE_API_KEY,FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY,LIVEBLOCK_SK)
 
 1. Click the button above, or import the repository at [vercel.com/new](https://vercel.com/new).
-2. Add all the required [environment variables](#-environment-variables).
-3. Set **Node.js 20.x or newer** under *Project Settings → General*.
-4. Add your production domain in the **Clerk Dashboard** under *Domains*.
-5. Deploy. 🚀
+2. Add all the required [environment variables](#-environment-variables). Paste `FIREBASE_PRIVATE_KEY` exactly as it appears in the service account JSON.
+3. Deploy the Firestore rules and, for existing data, run the migration. See the Firebase setup steps above.
+4. Set **Node.js 20.x or newer** under *Project Settings → General*.
+5. Add your production domain in the **Clerk Dashboard** under *Domains*.
+6. Deploy. 🚀
 
 Any platform that supports **Next.js 16** on **Node.js 20.9 or newer** works as well (Netlify, Railway, Render, Docker and others).
 
@@ -408,18 +437,17 @@ Any platform that supports **Next.js 16** on **Node.js 20.9 or newer** works as 
 ## 🛡️ Security
 
 - ✅ **0 known vulnerabilities**: all dependencies are on patched versions (`npm audit`).
-- ✅ **Secrets stay server-side**: `CLERK_SECRET_KEY` and `LIVEBLOCK_SK` are never sent to the browser.
+- ✅ **Secrets stay server-side**: `CLERK_SECRET_KEY`, `FIREBASE_PRIVATE_KEY` and `LIVEBLOCK_SK` are never sent to the browser.
+- ✅ **Clerk ⇄ Firebase integration**: users sign in to Firebase with a custom token minted from their Clerk session. The token carries their email and organization ids.
+- ✅ **Firestore security rules** ([`firestore.rules`](firestore.rules)): users can only read and write workspaces, documents and content that belong to them or to their organizations. Ownership can't be changed or spoofed, and every other collection is closed. The rules are covered by tests run against the Firestore emulator.
 - ✅ **Route protection**: `/dashboard`, `/workspace`, `/createworkspace` and the `/api/*` routes require a signed-in user.
 - ✅ **Scoped @mentions**: suggestions only include members of the document's workspace organization (or just the owner for personal workspaces).
 - ✅ **Room authorization**: the Liveblocks auth endpoint validates the room id and checks that the user owns the workspace or belongs to its organization before it grants access.
 - ✅ **No secrets in git**: `.env*` files are ignored, and `.env.example` contains placeholders only.
 
 > [!IMPORTANT]
-> The app talks to Firestore directly from the browser. Before going to production,
-> configure **[Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)**.
-> For the strongest setup, connect Clerk to Firebase Authentication
-> ([guide](https://clerk.com/docs/integrations/databases/firebase)) and restrict reads and
-> writes by user and organization.
+> Remember to deploy `firestore.rules` to your Firebase project. Until the rules are
+> deployed, Firestore uses whatever rules are currently set in the console.
 
 **Reporting a vulnerability:** please don't open a public issue. Use
 [GitHub private vulnerability reporting](https://github.com/ethical0101/Document-Planner/security/advisories/new) instead.
@@ -434,7 +462,7 @@ Any platform that supports **Next.js 16** on **Node.js 20.9 or newer** works as 
 - [x] Real-time sync between collaborators
 - [x] Threaded comments, @mentions & notifications
 - [x] Fully responsive UI
-- [ ] Clerk ⇄ Firebase Auth integration with strict Firestore rules
+- [x] Clerk ⇄ Firebase Auth integration with strict Firestore rules
 - [x] Workspace rename & delete
 - [ ] Workspace member management
 - [ ] Document search

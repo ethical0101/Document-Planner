@@ -48,6 +48,7 @@ function CreateWorkspace() {
       });
       batch.set(doc(db, "workspaceDocuments", docId), {
         workspaceId,
+        orgId: orgId ?? email,
         createdBy: email,
         coverImage: null,
         emoji: null,
@@ -57,6 +58,7 @@ function CreateWorkspace() {
       });
       batch.set(doc(db, "documentOutput", docId), {
         docId,
+        orgId: orgId ?? email,
         output: null,
       });
 

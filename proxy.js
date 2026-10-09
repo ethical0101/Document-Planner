@@ -1,12 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Routes that require a signed-in user.
+// Pages that require a signed-in user (others are redirected to sign in).
+// API routes verify the session themselves and respond with 401 instead.
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/workspace(.*)",
   "/createworkspace(.*)",
-  "/api/liveblocks-auth(.*)",
-  "/api/mention-suggestions(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
