@@ -1,71 +1,72 @@
-"use client"
-import React, { useState } from 'react'
+"use client";
+
+import React, { useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import Image from 'next/image'
-import { DialogClose } from '@radix-ui/react-dialog'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
+const COVER_OPTIONS = [1, 2, 3, 4, 5, 6].map((n) => `/Assets/coverImages/cover${n}.jpg`);
 
-function CoverPicker({children,setNewCover}) {
-  const CoverOption = [
-    { imageUrl: "/Assets/coverImages/cover1.jpg" },
-    { imageUrl: "/Assets/coverImages/cover2.jpg" },
-    { imageUrl: "/Assets/coverImages/cover3.jpg" },
-    { imageUrl: "/Assets/coverImages/cover4.jpg" },
-    { imageUrl: "/Assets/coverImages/cover5.jpg" }
-  ];
+function CoverPicker({ children, setNewCover }) {
+  const [selectedCover, setSelectedCover] = useState();
 
-  const [selectedCover,setSelectedCover]=useState();
   return (
     <Dialog>
-    <DialogTrigger className='w-full'>
-        {children}
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Update Cover</DialogTitle>
-        <DialogDescription>
-            <div className="grid grid-cols-2 gap-5 mt-3 md:grid-cols-3 lg:grid-cols-4">
-              {CoverOption.map((cover, index) => (
-                <div key={index} onClick={() => setSelectedCover(cover?.imageUrl)}
-                  className={`${selectedCover === cover?.imageUrl ? 'border-primary border-2 rounded-sm' : ''} p-1 rounded-md`}
-                >
-                  <Image
-                    src={cover?.imageUrl}
-                    width={200}
-                    height={140}
-                    className="w-full h-[70px] rounded-sm object-cover cursor-pointer"
-                    alt={`Cover ${index + 1}`}
-                  />
-                </div>
-              ))}
-            </div>
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter className="">
+      <DialogTrigger className="block w-full">{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Cover</DialogTitle>
+          <DialogDescription>Choose a cover image.</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {COVER_OPTIONS.map((imageUrl, index) => (
+            <button
+              type="button"
+              key={imageUrl}
+              onClick={() => setSelectedCover(imageUrl)}
+              aria-pressed={selectedCover === imageUrl}
+              className={`p-1 rounded-md border-2 ${
+                selectedCover === imageUrl ? "border-primary" : "border-transparent"
+              }`}
+            >
+              <Image
+                src={imageUrl}
+                width={200}
+                height={140}
+                className="w-full h-[70px] rounded-sm object-cover"
+                alt={`Cover ${index + 1}`}
+              />
+            </button>
+          ))}
+        </div>
+        <DialogFooter className="gap-2">
           <DialogClose asChild>
             <Button type="button" variant="secondary">
               Close
             </Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button type="button" onClick={()=>setNewCover(selectedCover)}>
+            <Button
+              type="button"
+              disabled={!selectedCover}
+              onClick={() => setNewCover(selectedCover)}
+            >
               Update
             </Button>
           </DialogClose>
         </DialogFooter>
-    </DialogContent>
-  </Dialog>
-
-  )
+      </DialogContent>
+    </Dialog>
+  );
 }
 
-export default CoverPicker
+export default CoverPicker;

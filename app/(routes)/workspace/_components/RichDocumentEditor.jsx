@@ -1,131 +1,149 @@
-import React, { useEffect, useRef, useState } from 'react'
-import EditorJS from '@editorjs/editorjs';
-import Header from '@editorjs/header';
-import Delimiter from '@editorjs/delimiter';
-import Alert from 'editorjs-alert';
-import List from "@editorjs/list";
-import NestedList from '@editorjs/nested-list';
-import Checklist from '@editorjs/checklist'
-import Embed from '@editorjs/embed';
-import SimpleImage from 'simple-image-editorjs';
-import Table from '@editorjs/table'
-import CodeTool from '@editorjs/code';
-import { TextVariantTune } from '@editorjs/text-variant-tune';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db } from '@/config/firebaseConfig';
-import { useUser } from '@clerk/nextjs';
-import Paragraph from '@editorjs/paragraph';
+"use client";
 
+import React, { useEffect } from "react";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { useUser } from "@clerk/nextjs";
+import { db } from "@/config/firebaseConfig";
 
-function RichDocumentEditor({ params }) {
+const SAVE_DELAY_MS = 600;
 
-  const ref = useRef();
-  let editorRef = useRef(null);
-  let editor;
-  const { user } = useUser();
-  const [documentOutput, setDocumentOutput] = useState([]);
-  let isFetched = useRef(false);
-  useEffect(() => {
-    if (user) {
-      InitEditor();
-    }
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
-        editorRef.current = null;
-      }
-      isFetched.current = false;
-    };
-  }, [user])
+async function loadTools() {
+  const [
+    { default: Header },
+    { default: Delimiter },
+    { default: Alert },
+    { default: List },
+    { default: Checklist },
+    { default: SimpleImage },
+    { default: Table },
+    { default: CodeTool },
+    { default: Paragraph },
+  ] = await Promise.all([
+    import("@editorjs/header"),
+    import("@editorjs/delimiter"),
+    import("editorjs-alert"),
+    import("@editorjs/list"),
+    import("@editorjs/checklist"),
+    import("simple-image-editorjs"),
+    import("@editorjs/table"),
+    import("@editorjs/code"),
+    import("@editorjs/paragraph"),
+  ]);
 
-  /**
-   * Used to save Document
-   */
-  const SaveDocument = () => {
-    if (!editorRef.current) return;
-    editorRef.current.save().then(async (outputData) => {
-      const docRef = doc(db, 'documentOutput', params?.documentid);
-      await updateDoc(docRef, {
-        output: JSON.stringify(outputData),
-        editedBy: user?.primaryEmailAddress?.emailAddress
-      })
-    })
-  }
-
-  const GetDocumentOutput = () => {
-    return onSnapshot(doc(db, 'documentOutput', params?.documentid),
-      (docSnap) => {
-        if (!docSnap.exists()) return;
-        const data = docSnap.data();
-        if ((data?.editedBy !== user?.primaryEmailAddress?.emailAddress || !isFetched.current) && data?.output) {
-          try {
-            editorRef.current && editorRef.current.render(JSON.parse(data.output));
-            isFetched.current = true;
-          } catch (e) {
-            // handle parse/render error
-          }
-        }
-      });
-  }
-
-  const InitEditor = () => {
-    if (!editorRef.current) {
-      editorRef.current = new EditorJS({
-        onChange: (api, event) => {
-          SaveDocument();
-        },
-        onReady: () => {
-          // Subscribe to Firestore updates and clean up on destroy
-          if (editorRef.current._unsubscribe) editorRef.current._unsubscribe();
-          editorRef.current._unsubscribe = GetDocumentOutput();
-        },
-        holder: 'editorjs',
-        tools: {
-          header: Header,
-          delimiter: Delimiter,
-          paragraph:Paragraph,
-          alert: {
-            class: Alert,
-            inlineToolbar: true,
-            shortcut: 'CMD+SHIFT+A',
-            config: {
-              alertTypes: ['primary', 'secondary', 'info', 'success', 'warning', 'danger', 'light', 'dark'],
-              defaultType: 'primary',
-              messagePlaceholder: 'Enter something',
-            }
-          },
-          table: Table,
-          list: {
-            class: List,
-            inlineToolbar: true,
-            shortcut: 'CMD+SHIFT+L',
-            config: {
-              defaultStyle: 'unordered'
-            },
-          },
-          checklist: {
-            class: Checklist,
-            shortcut: 'CMD+SHIFT+C',
-            inlineToolbar: true,
-          },
-          image: SimpleImage,
-          code: {
-            class: CodeTool,
-            shortcut: 'CMD+SHIFT+P'
-          },
-          //   textVariant: TextVariantTune
-
-
-        },
-
-      });
-    }
-  }
-  return (
-    <div className=''>
-      <div id='editorjs' className='w-[70%]'></div>
-    </div>
-  )
+  return {
+    header: Header,
+    delimiter: Delimiter,
+    paragraph: Paragraph,
+    alert: {
+      class: Alert,
+      inlineToolbar: true,
+      shortcut: "CMD+SHIFT+A",
+      config: {
+        alertTypes: ["primary", "secondary", "info", "success", "warning", "danger", "light", "dark"],
+        defaultType: "primary",
+        messagePlaceholder: "Enter something",
+      },
+    },
+    table: Table,
+    list: {
+      class: List,
+      inlineToolbar: true,
+      shortcut: "CMD+SHIFT+L",
+      config: { defaultStyle: "unordered" },
+    },
+    checklist: {
+      class: Checklist,
+      shortcut: "CMD+SHIFT+C",
+      inlineToolbar: true,
+    },
+    image: SimpleImage,
+    code: {
+      class: CodeTool,
+      shortcut: "CMD+SHIFT+P",
+    },
+  };
 }
 
-export default RichDocumentEditor
+function parseOutput(output) {
+  if (!output || typeof output !== "string") return null;
+  try {
+    const data = JSON.parse(output);
+    return Array.isArray(data?.blocks) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function RichDocumentEditor({ documentId }) {
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const holderId = `editorjs-${documentId}`;
+
+  useEffect(() => {
+    if (!email || !documentId) return;
+
+    let editor = null;
+    let unsubscribe = null;
+    let saveTimer = null;
+    let disposed = false;
+    let initialised = false;
+    const docRef = doc(db, "documentOutput", documentId);
+
+    // Debounced save so every keystroke does not hit Firestore.
+    const save = () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        if (!editor || disposed) return;
+        try {
+          const outputData = await editor.save();
+          await updateDoc(docRef, {
+            output: JSON.stringify(outputData),
+            editedBy: email,
+          });
+        } catch {
+          // Saving failed (e.g. offline); the next change will retry.
+        }
+      }, SAVE_DELAY_MS);
+    };
+
+    (async () => {
+      const [{ default: EditorJS }, tools] = await Promise.all([
+        import("@editorjs/editorjs"),
+        loadTools(),
+      ]);
+      if (disposed) return;
+
+      editor = new EditorJS({
+        holder: holderId,
+        placeholder: "Start writing here...",
+        tools,
+        onChange: save,
+        onReady: () => {
+          if (disposed) return;
+          // Load the saved content, then render changes made by collaborators.
+          unsubscribe = onSnapshot(docRef, (snap) => {
+            if (!snap.exists() || !editor) return;
+            const data = snap.data();
+            if (initialised && data?.editedBy === email) return;
+            initialised = true;
+            const parsed = parseOutput(data?.output);
+            if (parsed) editor.render(parsed).catch(() => {});
+          });
+        },
+      });
+    })();
+
+    return () => {
+      disposed = true;
+      clearTimeout(saveTimer);
+      unsubscribe?.();
+      if (editor) {
+        editor.isReady.then(() => editor.destroy()).catch(() => {});
+      }
+    };
+  }, [email, documentId, holderId]);
+
+  return <div id={holderId} className="w-full min-h-[300px]" />;
+}
+
+export default RichDocumentEditor;

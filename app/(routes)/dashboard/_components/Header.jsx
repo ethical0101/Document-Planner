@@ -1,43 +1,41 @@
-"use client"
-import Logo from '@/app/_components/Logo'
-import { db } from '@/config/firebaseConfig';
-import { OrganizationSwitcher, UserButton, useAuth, useUser } from '@clerk/nextjs'
-import { doc, setDoc } from 'firebase/firestore';
-import React, { useEffect } from 'react'
+"use client";
+
+import React, { useEffect } from "react";
+import { OrganizationSwitcher, UserButton, useUser } from "@clerk/nextjs";
+import { doc, setDoc } from "firebase/firestore";
+import Logo from "@/app/_components/Logo";
+import { db } from "@/config/firebaseConfig";
 
 function Header() {
-  const { orgId } = useAuth();
   const { user } = useUser();
 
-  useEffect(()=>{
-    user&&saveUserData();
-  },[user])
+  // Keep a public profile (name, avatar, email) for @mentions and comments.
+  useEffect(() => {
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (!email) return;
+    setDoc(doc(db, "DocPlannerUsers", email), {
+      name: user.fullName ?? email,
+      avatar: user.imageUrl ?? null,
+      email,
+    }).catch(() => {});
+  }, [user]);
 
-  /**
-   * Used to save user data
-   */
-  const saveUserData = async () => {
-     const docId = user?.primaryEmailAddress?.emailAddress
-    try {
-      await setDoc(doc(db, 'DocPlannerUsers', docId), {
-        name: user?.fullName,
-        avatar: user?.imageUrl,
-        email: user?.primaryEmailAddress?.emailAddress
-      })
-    }
-    catch (e) {
-
-    }
-  }
   return (
-    <div className='flex items-center justify-between p-3 shadow-sm'>
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 p-3 bg-white shadow-sm sm:px-6">
       <Logo />
-      <OrganizationSwitcher
-        afterLeaveOrganizationUrl={'/dashboard'}
-        afterCreateOrganizationUrl={'/dashboard'} />
-      <UserButton />
-    </div>
-  )
+      <div className="flex items-center min-w-0 gap-2 sm:gap-4">
+        <div className="hidden min-w-0 sm:block">
+          <OrganizationSwitcher
+            afterLeaveOrganizationUrl="/dashboard"
+            afterCreateOrganizationUrl="/dashboard"
+            afterSelectOrganizationUrl="/dashboard"
+            afterSelectPersonalUrl="/dashboard"
+          />
+        </div>
+        <UserButton />
+      </div>
+    </header>
+  );
 }
 
-export default Header
+export default Header;

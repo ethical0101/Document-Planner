@@ -1,34 +1,44 @@
-import React, { useState } from 'react'
-import DocumentHeader from './DocumentHeader'
-import DocumentInfo from './Documentinfo'
-import RichDocumentEditor from './RichDocumentEditor'
-import { Button } from '@/components/ui/button'
-import { MessageCircle, X } from 'lucide-react'
-import CommentBox from './CommentBox'
+"use client";
 
-function DocumentEditorSection({ params }) {
+import React, { useState } from "react";
+import { MessageCircle, X } from "lucide-react";
+import { Room } from "@/app/Room";
+import { Button } from "@/components/ui/button";
+import CommentBox from "./CommentBox";
+import DocumentHeader from "./DocumentHeader";
+import DocumentInfo from "./DocumentInfo";
+import RichDocumentEditor from "./RichDocumentEditor";
+import RoomSubscriptions from "./RoomSubscriptions";
 
+function DocumentEditorSection({ workspaceId, documentId }) {
   const [openComment, setOpenComment] = useState(false);
+
   return (
-    <div className='relative'>
-      {/* Header  */}
-      <DocumentHeader />
+    <div className="relative">
+      <DocumentHeader workspaceId={workspaceId} documentId={documentId} />
 
-      {/* Document Info  */}
-      <DocumentInfo params={params} />
+      <Room roomId={documentId}>
+        <RoomSubscriptions />
 
-      {/* Rich Text Editor  */}
+        <DocumentInfo documentId={documentId} />
 
-        <RichDocumentEditor params={params} />
+        <div className="px-4 pb-32 sm:px-10 md:px-16 lg:px-20">
+          <RichDocumentEditor documentId={documentId} />
+        </div>
 
-      <div className='fixed right-10 bottom-10 '>
-        <Button onClick={() => setOpenComment(!openComment)}>
-          {openComment ? <X /> : <MessageCircle />} </Button>
-        {openComment && <CommentBox />}
-      </div>
-
+        <div className="fixed z-30 flex flex-col items-end gap-3 right-4 bottom-4 sm:right-8 sm:bottom-8">
+          {openComment && <CommentBox />}
+          <Button
+            onClick={() => setOpenComment(!openComment)}
+            className="rounded-full shadow-lg w-12 h-12"
+            aria-label={openComment ? "Close comments" : "Open comments"}
+          >
+            {openComment ? <X /> : <MessageCircle />}
+          </Button>
+        </div>
+      </Room>
     </div>
-  )
+  );
 }
 
-export default DocumentEditorSection
+export default DocumentEditorSection;

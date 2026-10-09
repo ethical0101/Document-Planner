@@ -1,15 +1,6 @@
-import React from 'react'
-import SideNav from '../_components/SideNav'
-import { Room } from '@/app/Room'
+import WorkspaceLanding from "../_components/WorkspaceLanding";
 
-function Workspace({params}) {
-  return (
-    <div>
-      <Room params={params}>
-        <SideNav params={params} />
-        </Room>
-    </div>
-  )
+export default async function WorkspacePage({ params }) {
+  const { workspaceid } = await params;
+  return <WorkspaceLanding workspaceId={workspaceid} />;
 }
-
-export default Workspace

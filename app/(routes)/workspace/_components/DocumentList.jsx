@@ -1,49 +1,65 @@
-import { StickyNote } from "lucide-react";
-import { useRouter } from "next/navigation";
+"use client";
+
 import React from "react";
+import { useRouter } from "next/navigation";
+import { StickyNote } from "lucide-react";
+import { toast } from "sonner";
+import { deleteDocument } from "@/lib/documents";
 import DocumentOptions from "./DocumentOptions";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/config/firebaseConfig";
-import { toast } from "@/hooks/use-toast";
 
-function DocumentList({ documentList, params }) {
-    const router = useRouter();
+function DocumentList({ documentList, workspaceId, activeDocumentId }) {
+  const router = useRouter();
 
-    const DeleteDocument = async (docId)=>{
-        await deleteDoc(doc(db, "workspaceDocuments", docId));
+  const onDeleteDocument = async (docId) => {
+    try {
+      await deleteDocument(docId);
+      toast("Document deleted");
+      if (docId === activeDocumentId) {
+        const next = documentList.find((d) => d.id !== docId);
+        router.replace(`/workspace/${workspaceId}${next ? `/${next.id}` : ""}`);
+      }
+    } catch (e) {
+      toast.error("Could not delete the document.");
     }
-    console.log("DocumentLIst params",params);
-    console.log(documentList);
-    return (
-        <div>
-            {documentList.map((doc, index) => {
-                return (
-                    <div
-                        key={index}
-                        onClick={() => {
-                            // Navigate to the document's workspace and ID
-                            router.push('/workspace/' + params?.workspaceid + '/' + doc?.id);
-                        }}
-                    >
-                        <div
-                            className={`relative flex justify-between items-center gap-3 p-2 px-3 mt-3 rounded-lg cursor-pointer hover:bg-gray-200
-                                ${doc?.id == params?.documentid && 'bg-white'}
-                            `}
-                        >
-                        <div className='flex items-center gap-2'>
-                            {/* Render StickyNote icon if no Emoji is present */}
-                            {!doc.emoji && <StickyNote className="w-[20px] h-[20px]" />}
-                            <h2 className="flex gap-2">
-                                {doc?.emoji} {doc.documentName}
-                            </h2>
-                            <DocumentOptions className="mt-5" doc={doc} deleteDocument={(docId)=>DeleteDocument(docId)}/>
-                        </div>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
+  };
+
+  if (!documentList.length) {
+    return <p className="mt-4 text-sm text-gray-500">No documents yet.</p>;
+  }
+
+  return (
+    <ul>
+      {documentList.map((document) => (
+        <li key={document.id}>
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={() => router.push(`/workspace/${workspaceId}/${document.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") router.push(`/workspace/${workspaceId}/${document.id}`);
+            }}
+            className={`flex items-center justify-between gap-2 p-2 px-3 mt-2 rounded-lg cursor-pointer hover:bg-gray-200 ${
+              document.id === activeDocumentId ? "bg-white shadow-sm" : ""
+            }`}
+          >
+            <div className="flex items-center min-w-0 gap-2">
+              {document.emoji ? (
+                <span className="shrink-0">{document.emoji}</span>
+              ) : (
+                <StickyNote className="w-5 h-5 shrink-0" />
+              )}
+              <span className="truncate">{document.documentName || "Untitled Document"}</span>
+            </div>
+            <DocumentOptions
+              document={document}
+              workspaceId={workspaceId}
+              onDelete={() => onDeleteDocument(document.id)}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default DocumentList;

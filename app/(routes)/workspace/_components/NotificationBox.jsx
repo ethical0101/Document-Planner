@@ -1,43 +1,43 @@
-import React, { useEffect } from 'react'
+"use client";
+
+import React from "react";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-  import { useInboxNotifications, useUnreadInboxNotificationsCount, useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
-  import {
-    InboxNotification,
-    InboxNotificationList,
-  } from "@liveblocks/react-ui";
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,
+} from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-function NotificationBox({children}) {
-    const { inboxNotifications } = useInboxNotifications();
-    const updateRoomNotificationSettings=useUpdateRoomNotificationSettings();
-    const { count, error, isLoading } = useUnreadInboxNotificationsCount();
-    useEffect(()=>{
-        updateRoomNotificationSettings({threads:'all'})
-        console.log(count)
-    },[count])
+function NotificationBox({ children }) {
+  const { inboxNotifications } = useInboxNotifications();
+  const { count } = useUnreadInboxNotificationsCount();
 
-    return (
+  return (
     <Popover>
-    <PopoverTrigger>
-        <div className='flex gap-1'>
-    {children} <span className='p-1 px-2 -ml-3 rounded-full text-[7px] bg-primary text-white'>{count}</span>
-        </div></PopoverTrigger>
-    <PopoverContent className={'w-[500px]'}>
-    <InboxNotificationList>
-      {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-        />
-      ))}
-    </InboxNotificationList>
-    </PopoverContent>
-  </Popover>
-
-  )
+      <PopoverTrigger className="relative p-1 rounded-md hover:bg-gray-200" aria-label="Notifications">
+        {children}
+        {count > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] leading-4 text-center bg-primary text-white">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[calc(100vw-2rem)] sm:w-[420px] max-h-[70vh] overflow-y-auto p-0"
+      >
+        {inboxNotifications.length === 0 ? (
+          <p className="p-4 text-sm text-gray-500">You&apos;re all caught up.</p>
+        ) : (
+          <InboxNotificationList>
+            {inboxNotifications.map((inboxNotification) => (
+              <InboxNotification key={inboxNotification.id} inboxNotification={inboxNotification} />
+            ))}
+          </InboxNotificationList>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
-export default NotificationBox
+export default NotificationBox;

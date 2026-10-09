@@ -1,58 +1,89 @@
 "use client";
 
-import { ReactNode } from "react";
 import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import { collection, doc, getDocs, query, QuerySnapshot, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { Loader2Icon } from "lucide-react";
 import { db } from "@/config/firebaseConfig";
 
-export function Room({ params , children}) {
-  console.log("Room jsx params->",params);
-  console.log("Room jsx children->",children);
+// Firestore limits "in" queries to 30 values.
+const IN_QUERY_LIMIT = 30;
+
+async function fetchUsersByEmail(emails) {
+  const users = new Map();
+  for (let i = 0; i < emails.length; i += IN_QUERY_LIMIT) {
+    const chunk = emails.slice(i, i + IN_QUERY_LIMIT);
+    const snapshot = await getDocs(
+      query(collection(db, "DocPlannerUsers"), where("email", "in", chunk))
+    );
+    snapshot.forEach((userDoc) => {
+      const data = userDoc.data();
+      users.set(data.email, data);
+    });
+  }
+  return users;
+}
+
+/**
+ * Provides the Liveblocks client (auth, user resolution and @mentions)
+ * to everything inside a workspace.
+ */
+export function LiveblocksClientProvider({ children }) {
   return (
     <LiveblocksProvider
-    authEndpoint={"/api/liveblocks-auth?roomId=" + params?.documentid}
-    resolveUsers={async ( { userIds }) => {
-        console.log("Room jsx UserId's==>",userIds);
-        const q=query(collection(db,'DocPlannerUsers'),where('email','in',userIds))
-        const querySnapshot= await getDocs(q);
-        const userList=[];
-        querySnapshot.forEach((doc)=>{
-            console.log(doc.data());
-            userList.push(doc.data());
-        })
-        console.log("Before UserList-->",userList);
-        return userList
+      authEndpoint="/api/liveblocks-auth"
+      resolveUsers={async ({ userIds }) => {
+        const users = await fetchUsersByEmail(userIds);
+        // Liveblocks expects results in the same order as the requested ids.
+        return userIds.map((id) => {
+          const user = users.get(id);
+          return user ? { name: user.name || user.email, avatar: user.avatar } : undefined;
+        });
       }}
-      resolveMentionSuggestions={async ({ text, roomId }) => {
-        // The text the user is searching for, e.g. "mar"
-        const q=query(collection(db,'DocPlannerUsers'),where('email','!=',null))
-        const querySnapshot= await getDocs(q);
-        let userList=[];
-        querySnapshot.forEach((doc)=>{
-            console.log(doc.data());
-            userList.push(doc.data());
-        })
-
-        if (text) {
-            // Filter any way you'd like, e.g. checking if the name matches
-            userList = userList.filter((user) => user.name.includes(text));
+      resolveMentionSuggestions={async ({ text }) => {
+        const snapshot = await getDocs(
+          query(collection(db, "DocPlannerUsers"), where("email", "!=", null))
+        );
+        const search = text?.toLowerCase() ?? "";
+        const matches = [];
+        snapshot.forEach((userDoc) => {
+          const { name, email } = userDoc.data();
+          if (
+            !search ||
+            name?.toLowerCase().includes(search) ||
+            email?.toLowerCase().includes(search)
+          ) {
+            matches.push(email);
           }
-        // Return a list of user IDs that match the query
-        console.log("User List",userList);
-        return userList.map((user) => user.email);
+        });
+        return matches;
       }}
     >
-      {params?.documentid && (
-        <RoomProvider id={params.documentid}>
-          <ClientSideSuspense fallback={<div>Loading…</div>}>
-            {children}
-          </ClientSideSuspense>
-        </RoomProvider>
-      )}
+      {children}
     </LiveblocksProvider>
+  );
+}
+
+/**
+ * Joins the real-time room for a single document.
+ */
+export function Room({ roomId, children }) {
+  if (!roomId) return null;
+
+  return (
+    <RoomProvider id={roomId}>
+      <ClientSideSuspense
+        fallback={
+          <div className="flex items-center justify-center w-full h-[60vh] text-gray-500">
+            <Loader2Icon className="w-6 h-6 mr-2 animate-spin" /> Loading document…
+          </div>
+        }
+      >
+        {children}
+      </ClientSideSuspense>
+    </RoomProvider>
   );
 }
