@@ -1,5 +1,5 @@
 {
-  "name": "document-planner-app",
+  "name": "document-planner",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -55,5 +55,29 @@
   },
   "engines": {
     "node": ">=20.9.0"
-  }
+  },
+  "description": "Real-time collaborative document workspace built with Next.js, Clerk, Firestore, Liveblocks and Editor.js.",
+  "homepage": "https://document-planner.vercel.app/",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethical0101/Document-Planner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ethical0101/Document-Planner/issues"
+  },
+  "keywords": [
+    "nextjs",
+    "react",
+    "collaboration",
+    "real-time",
+    "document-editor",
+    "editorjs",
+    "firebase",
+    "firestore",
+    "clerk",
+    "liveblocks",
+    "tailwindcss",
+    "notion-clone"
+  ]
 }
