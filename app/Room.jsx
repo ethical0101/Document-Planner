@@ -1,11 +1,14 @@
 "use client";
 
+import React from "react";
 import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import Link from "next/link";
+import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { Loader2Icon } from "lucide-react";
 import { db } from "@/config/firebaseConfig";
 
@@ -15,6 +18,39 @@ const IN_QUERY_LIMIT = 30;
 // Profiles seen in mention suggestions, so mentioned members always resolve
 // to a name and avatar even if they have not opened the dashboard yet.
 const knownUsers = new Map();
+
+/**
+ * Resolves Liveblocks room ids (document ids) to readable document names and
+ * links, used by notifications.
+ */
+async function fetchRoomsInfo(roomIds) {
+  return Promise.all(
+    roomIds.map(async (roomId) => {
+      try {
+        const snap = await getDoc(doc(db, "workspaceDocuments", roomId));
+        if (!snap.exists()) return { name: "Deleted document" };
+        const { documentName, emoji, workspaceId } = snap.data();
+        const name = documentName || "Untitled Document";
+        return {
+          name: emoji ? `${emoji} ${name}` : name,
+          url: `/workspace/${workspaceId}/${roomId}`,
+        };
+      } catch {
+        return { name: "Document" };
+      }
+    })
+  );
+}
+
+/**
+ * Renders Liveblocks links with Next.js navigation for in-app URLs.
+ */
+const AppAnchor = React.forwardRef(function AppAnchor({ href, ...props }, ref) {
+  if (typeof href === "string" && href.startsWith("/")) {
+    return <Link ref={ref} href={href} {...props} />;
+  }
+  return <a ref={ref} href={href} target="_blank" rel="noopener noreferrer" {...props} />;
+});
 
 async function fetchUsersByEmail(emails) {
   const users = new Map();
@@ -55,6 +91,7 @@ export function LiveblocksClientProvider({ children }) {
           return { name: user?.name || id, avatar: user?.avatar ?? undefined };
         });
       }}
+      resolveRoomsInfo={({ roomIds }) => fetchRoomsInfo(roomIds)}
       resolveMentionSuggestions={async ({ text, roomId }) => {
         // Only members of the document's workspace can be mentioned.
         const params = new URLSearchParams({ roomId, text: text ?? "" });
@@ -65,7 +102,7 @@ export function LiveblocksClientProvider({ children }) {
         return users.map((user) => user.email);
       }}
     >
-      {children}
+      <LiveblocksUIConfig components={{ Anchor: AppAnchor }}>{children}</LiveblocksUIConfig>
     </LiveblocksProvider>
   );
 }

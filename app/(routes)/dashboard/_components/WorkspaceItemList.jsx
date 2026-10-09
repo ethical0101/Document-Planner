@@ -4,16 +4,17 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { coverImageSrc } from "@/lib/workspace";
+import WorkspaceOptions from "./WorkspaceOptions";
 
-function WorkspaceItemList({ workspaceList, view = "grid" }) {
+function WorkspaceItemList({ workspaceList, view = "grid", onRenamed, onDeleted }) {
   if (view === "list") {
     return (
       <ul className="mt-6 overflow-hidden border divide-y rounded-xl">
         {workspaceList.map((workspace) => (
-          <li key={workspace.id}>
+          <li key={workspace.id} className="flex items-center gap-2 pr-3 hover:bg-gray-50">
             <Link
               href={`/workspace/${workspace.id}`}
-              className="flex items-center gap-4 p-3 transition-colors hover:bg-gray-50"
+              className="flex items-center flex-1 min-w-0 gap-4 p-3"
             >
               <Image
                 src={coverImageSrc(workspace.coverImage)}
@@ -26,6 +27,11 @@ function WorkspaceItemList({ workspaceList, view = "grid" }) {
                 {workspace.emoji} {workspace.workspaceName}
               </span>
             </Link>
+            <WorkspaceOptions
+              workspace={workspace}
+              onRenamed={(name) => onRenamed?.(workspace.id, name)}
+              onDeleted={() => onDeleted?.(workspace.id)}
+            />
           </li>
         ))}
       </ul>
@@ -35,24 +41,31 @@ function WorkspaceItemList({ workspaceList, view = "grid" }) {
   return (
     <div className="grid grid-cols-1 gap-6 mt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {workspaceList.map((workspace) => (
-        <Link
-          key={workspace.id}
-          href={`/workspace/${workspace.id}`}
-          className="block overflow-hidden transition-all border shadow-lg rounded-xl hover:scale-[1.03] hover:shadow-xl"
-        >
-          <Image
-            src={coverImageSrc(workspace.coverImage)}
-            width={400}
-            height={200}
-            alt="Workspace cover"
-            className="w-full h-[150px] object-cover"
+        <div key={workspace.id} className="relative group">
+          <Link
+            href={`/workspace/${workspace.id}`}
+            className="block overflow-hidden transition-all border shadow-lg rounded-xl hover:scale-[1.03] hover:shadow-xl"
+          >
+            <Image
+              src={coverImageSrc(workspace.coverImage)}
+              width={400}
+              height={200}
+              alt="Workspace cover"
+              className="w-full h-[150px] object-cover"
+            />
+            <div className="p-4">
+              <h2 className="flex gap-2 pr-6 truncate">
+                {workspace.emoji} {workspace.workspaceName}
+              </h2>
+            </div>
+          </Link>
+          <WorkspaceOptions
+            className="absolute top-2 right-2"
+            workspace={workspace}
+            onRenamed={(name) => onRenamed?.(workspace.id, name)}
+            onDeleted={() => onDeleted?.(workspace.id)}
           />
-          <div className="p-4">
-            <h2 className="flex gap-2 truncate">
-              {workspace.emoji} {workspace.workspaceName}
-            </h2>
-          </div>
-        </Link>
+        </div>
       ))}
     </div>
   );

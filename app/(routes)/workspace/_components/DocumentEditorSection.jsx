@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { Room } from "@/app/Room";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,11 @@ import RoomSubscriptions from "./RoomSubscriptions";
 
 function DocumentEditorSection({ workspaceId, documentId }) {
   const [openComment, setOpenComment] = useState(false);
+
+  // Links from comment notifications end with a thread or comment anchor.
+  useEffect(() => {
+    if (/^#(th|cm)_/.test(window.location.hash)) setOpenComment(true);
+  }, []);
 
   return (
     <div className="relative">

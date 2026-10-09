@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { SmilePlus } from "lucide-react";
@@ -13,6 +13,8 @@ import { coverImageSrc } from "@/lib/workspace";
 function DocumentInfo({ documentId }) {
   const [documentInfo, setDocumentInfo] = useState(null);
   const [documentName, setDocumentName] = useState("");
+  // While the title is being edited, remote updates must not overwrite it.
+  const editingName = useRef(false);
 
   useEffect(() => {
     if (!documentId) return;
@@ -20,7 +22,7 @@ function DocumentInfo({ documentId }) {
       if (!snap.exists()) return;
       const data = snap.data();
       setDocumentInfo(data);
-      setDocumentName(data?.documentName ?? "");
+      if (!editingName.current) setDocumentName(data?.documentName ?? "");
     });
   }, [documentId]);
 
@@ -34,6 +36,7 @@ function DocumentInfo({ documentId }) {
   };
 
   const onNameBlur = () => {
+    editingName.current = false;
     const name = documentName.trim();
     if (name && name !== documentInfo?.documentName) {
       updateDocumentInfo("documentName", name);
@@ -86,6 +89,7 @@ function DocumentInfo({ documentId }) {
           placeholder="Untitled Document"
           value={documentName}
           maxLength={120}
+          onFocus={() => (editingName.current = true)}
           onChange={(e) => setDocumentName(e.target.value)}
           onBlur={onNameBlur}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}

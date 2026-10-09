@@ -9,12 +9,12 @@ import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { ArrowLeft, Bell, Loader2Icon, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/app/_components/Logo";
+import NotificationBox from "@/app/_components/NotificationBox";
 import { Button } from "@/components/ui/button";
 import { db } from "@/config/firebaseConfig";
 import { createDocument } from "@/lib/documents";
 import { workspaceIdVariants } from "@/lib/workspace";
 import DocumentList from "./DocumentList";
-import NotificationBox from "./NotificationBox";
 
 const MAX_DOCUMENTS = 50;
 
@@ -73,9 +73,7 @@ function SideNav({ workspaceId, onClose }) {
         <Logo />
         <div className="flex items-center gap-1">
           <ClientSideSuspense fallback={<Bell className="w-5 h-5 text-gray-400" />}>
-            <NotificationBox>
-              <Bell className="w-5 h-5 text-gray-500" />
-            </NotificationBox>
+            <NotificationBox />
           </ClientSideSuspense>
           <button
             type="button"

@@ -98,7 +98,16 @@ function WorkspaceList() {
           </Link>
         </div>
       ) : (
-        <WorkspaceItemList workspaceList={workspaceList} view={view} />
+        <WorkspaceItemList
+          workspaceList={workspaceList}
+          view={view}
+          onRenamed={(id, workspaceName) =>
+            setWorkspaceList((list) =>
+              list.map((w) => (w.id === id ? { ...w, workspaceName } : w))
+            )
+          }
+          onDeleted={(id) => setWorkspaceList((list) => list.filter((w) => w.id !== id))}
+        />
       )}
     </div>
   );

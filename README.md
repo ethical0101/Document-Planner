@@ -113,6 +113,7 @@ It shows how to put together a production-grade stack:
 ### 🗂️ Workspaces
 - Create workspaces with a **name, emoji and cover image**
 - Switch between a **grid and a list view** on the dashboard
+- **Rename** or **delete** workspaces (deleting removes all their documents)
 - Workspaces belong to the active organization or to your personal account
 
 ### 📝 Documents
@@ -131,7 +132,7 @@ Built on [Editor.js](https://editorjs.io/), with these blocks:
 ### 💬 Collaboration
 - **Threaded comments** powered by Liveblocks
 - **@mentions** with autocomplete, limited to members of the workspace organization
-- **Notifications inbox** with an unread badge
+- **Notifications inbox** on the dashboard and in workspaces: shows document names, links straight to the comment and clears the unread badge when opened
 
 ### 📱 Responsive Design
 - A slide-in **sidebar drawer** on mobile, and a fixed sidebar on desktop
@@ -434,7 +435,8 @@ Any platform that supports **Next.js 16** on **Node.js 20.9 or newer** works as 
 - [x] Threaded comments, @mentions & notifications
 - [x] Fully responsive UI
 - [ ] Clerk ⇄ Firebase Auth integration with strict Firestore rules
-- [ ] Workspace rename, delete & member management
+- [x] Workspace rename & delete
+- [ ] Workspace member management
 - [ ] Document search
 - [ ] Dark mode
 - [ ] Export to PDF / Markdown
